@@ -1,0 +1,41 @@
+# =============================================================
+# IronElevator.sk
+# 
+# [概要] 鉄ブロックを使用した垂直エレベーター
+# [操作] ジャンプで上昇 / スニークで下降
+# [作成] ryoma_1125 (https://x.com/ryoma_1125)
+# [GitHub] https://github.com/ryoma-1125
+# [ライセンス] MIT License
+# =============================================================
+
+# --- 設定項目 ---
+options:
+    MinRange: 2      # 探索を開始する距離
+    MaxRange: 100    # 探索する最大高度
+    SoundUp: "entity.enderman.teleport"
+    SoundDown: "entity.enderman.teleport"
+
+# --- 上移動 (ジャンプ) ---
+on jump:
+    if block 1 below player is iron block:
+        loop blocks from block {@MinRange} above player to block {@MaxRange} above player:
+            if loop-block is iron block:
+                if block 1 above loop-block is air:
+                    if block 2 above loop-block is air:
+                        teleport player to block 1 above loop-block
+                        play sound {@SoundUp} with volume 0.5 and pitch 2 to player
+                        stop
+
+# --- 下移動 (スニーク) ---
+on sneak toggle:
+    # スニークを開始した瞬間のみ実行
+    if player is not sneaking:
+        if block 1 below player is iron block:
+            # 探索開始位置を少し下げて現在の足元をループから外す
+            loop blocks from block 3 below player to block {@MaxRange} below player:
+                if loop-block is iron block:
+                    if block 1 above loop-block is air:
+                        if block 2 above loop-block is air:
+                            teleport player to block 1 above loop-block
+                            play sound {@SoundDown} with volume 0.5 and pitch 1.5 to player
+                            stop
