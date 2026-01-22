@@ -1,0 +1,102 @@
+# =============================================================
+# JumpPad.sk
+# 
+# [概要] 感圧版の下のブロックに応じた特殊移動ギミック
+# [対応] Minecraft 1.21.11
+# [作成] ryoma_1125 (https://x.com/ryoma_1125)
+# [GitHub] https://github.com/ryoma-1125
+# [ライセンス] MIT License
+# =============================================================
+
+# --- 設定項目 (配布先で調整可能) ---
+options:
+    [cite_start]DiamondSpeed: 7.0    # ダイヤモンド：視線移動速度 [cite: 3]
+    [cite_start]EmeraldUp: 2.0       # エメラルド：上昇速度 [cite: 4]
+    [cite_start]GoldSpeed: 2.5       # 金：垂直上昇速度 [cite: 5]
+    [cite_start]CoalSpeed: 1.5       # 石炭：小ジャンプ速度 [cite: 6]
+    [cite_start]IronUp: 0.8          # 鉄：浮かし速度 [cite: 7]
+    [cite_start]IronForward: 3.0     # 鉄：水平加速速度 [cite: 7]
+    [cite_start]CheckInterval: 1 second # 地面判定の間隔 [cite: 9]
+
+# --- メイン処理 ---
+on step on pressure plate:
+    set {_u} to uuid of player
+    [cite_start]set {_b} to block 1 below event-block # [cite: 1]
+    
+    # --- 隣接チェックロジック ---
+    # [cite_start]パッドが隣接している場合は競合防止のため無効化する [cite: 1]
+    set {_adj} to 0
+    loop block north of {_b}, block south of {_b}, block east of {_b} and block west of {_b}:
+        set {_t} to "%type of loop-value%"
+        [cite_start]if {_t} contains "gold block" or "iron block" or "coal block" or "diamond block" or "emerald block": # [cite: 1, 2]
+            add 1 to {_adj}
+    
+    if {_adj} > 0:
+        send action bar "&c&lエラー: &fパッドが隣接しているため無効です" to player
+        stop
+
+    # [cite_start]落下距離をリセットして即死を防止 [cite: 2]
+    set fall distance of player to 0
+
+    # --- 各ブロックの処理 ---
+    
+    # ダイヤモンド：視線移動 (ベクトル移動)
+    if {_b} is diamond block:
+        [cite_start]play sound "entity.illusioner.mirror_move" with volume 1 and pitch 1.5 at event-location [cite: 3]
+        [cite_start]push player in direction of player at speed {@DiamondSpeed} [cite: 3]
+        set {fall_protection::%{_u}%} to true
+        [cite_start]send action bar "&b&l視線移動！！" to player [cite: 3]
+
+    # エメラルド：空中滑空 (無重力)
+    else if {_b} is emerald block:
+        [cite_start]play sound "entity.shulker.shoot" with volume 1 and pitch 1 at event-location [cite: 4]
+        [cite_start]push player upwards at speed {@EmeraldUp} [cite: 4]
+        [cite_start]wait 1 tick [cite: 4]
+        [cite_start]push player forward at speed 1.0 [cite: 4]
+        [cite_start]apply levitation 1 to player for 6 seconds [cite: 4]
+        [cite_start]apply slow falling 1 to player for 10 seconds [cite: 4]
+        set {fall_protection::%{_u}%} to true
+        [cite_start]send action bar "&a&l空中滑空！！" to player [cite: 4]
+
+    # 金ブロック：垂直上昇 大
+    else if {_b} is gold block:
+        [cite_start]play sound "entity.firework_rocket.launch" with volume 1 and pitch 1 at event-location [cite: 5]
+        [cite_start]push player upwards at speed {@GoldSpeed} [cite: 5]
+        set {fall_protection::%{_u}%} to true
+        [cite_start]send action bar "&e&l上昇中！！" to player [cite: 5]
+        
+    # 石炭ブロック：垂直上昇　小
+    else if {_b} is coal block:
+        [cite_start]play sound "entity.firework_rocket.launch" with volume 1 and pitch 1 at event-location [cite: 6]
+        [cite_start]push player upwards at speed {@CoalSpeed} [cite: 6]
+        set {fall_protection::%{_u}%} to true
+        [cite_start]send action bar "&2&l上昇中..." to player [cite: 6]
+
+    # 鉄ブロック：水平加速
+    else if {_b} is iron block:
+        [cite_start]play sound "entity.firework_rocket.blast" with volume 1 and pitch 1.5 at event-location [cite: 7]
+        [cite_start]push player upwards at speed {@IronUp} [cite: 7]
+        [cite_start]push player horizontal forward at speed {@IronForward} [cite: 7]
+        set {fall_protection::%{_u}%} to true
+        [cite_start]send action bar "&b&l水平加速！！" to player [cite: 7]
+
+# --- 落下ダメージ保護システム ---
+on damage:
+    if damage cause is fall:
+        [cite_start]if {fall_protection::%uuid of victim%} is true: # [cite: 8]
+            [cite_start]cancel event # [cite: 8]
+            [cite_start]play sound "entity.generic.small_fall" with volume 0.5 and pitch 2 to victim # [cite: 8]
+
+# [cite_start]地面チェック：プレート以外の地面に着いたら保護を終了 [cite: 9]
+every {@CheckInterval}:
+    loop all players:
+        set {_u} to uuid of loop-player
+        [cite_start]if {fall_protection::%{_u}%} is true: # [cite: 9]
+            [cite_start]if loop-player is on ground: # [cite: 9]
+                [cite_start]set {_b_type} to "%block at loop-player%" # 型エラー回避の文字列変換 [cite: 9]
+                [cite_start]if {_b_type} does not contain "plate": # [cite: 9]
+                    [cite_start]delete {fall_protection::%{_u}%} # [cite: 9]
+
+# ログアウト時にデータを消去
+on quit:
+    [cite_start]delete {fall_protection::%uuid of player%} # [cite: 9]
