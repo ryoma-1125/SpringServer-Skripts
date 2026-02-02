@@ -1,0 +1,208 @@
+# =============================================================
+
+# TimeSignal.sk
+
+# 
+
+# [概要] 1時間ごとにチャイムと24種類のメッセージで時刻をお知らせします
+
+# [対応] Minecraft 1.21.11 / Skript 最新版推奨
+
+# [作成] ryoma_1125 (https://x.com/ryoma_1125)
+
+# [GitHub] https://github.com/ryoma-1125
+
+# [ライセンス] MIT License
+
+# =============================================================
+
+
+
+options:
+
+    # 放送の接頭辞
+
+    Prefix: &e&l[&b&lINFO&e&l]&r
+
+    
+
+    # 時報のチャイム音
+
+    Sound_Chime: "block.note_block.bell"
+
+    
+
+    # タイムゾーン設定 (UTCからの時差。日本なら 9)
+
+    TimeZoneOffset: 9
+
+
+
+# --- 毎分チェックして00分ちょうどに放送 ---
+
+every 1 minute:
+
+    set {_m_text} to now formatted as "mm"
+
+    set {_m} to {_m_text} parsed as integer
+
+    
+
+    if {_m} is 0:
+
+        set {_h_text} to now formatted as "HH"
+
+        set {_h} to {_h_text} parsed as integer
+
+        
+
+        # タイムゾーンの修正
+
+        set {_h} to {_h} + {@TimeZoneOffset}
+
+        
+
+        # 24時を超えた場合のループ処理
+
+        if {_h} >= 24:
+
+            set {_h} to {_h} - 24
+
+        else if {_h} < 0:
+
+            set {_h} to {_h} + 24
+
+            
+
+        # 放送用コマンドの実行
+
+        make console execute command "/timesignal-broadcast %{_h}%"
+
+
+
+# --- 時報放送コマンド (手動テストも可能) ---
+
+command /timesignal-broadcast <integer>:
+
+    permission: op
+
+    description: 指定した時間の時報を強制的に放送します
+
+    trigger:
+
+        set {_h} to arg-1
+
+        
+
+        # 二段チャイムの演出
+
+        play sound {@Sound_Chime} with volume 1 and pitch 1 to all players
+
+        wait 0.5 seconds
+
+        play sound {@Sound_Chime} with volume 1 and pitch 0.8 to all players
+
+        
+
+        broadcast "{@Prefix} &fよりお知らせします。&b%{_h}%時 &fをお知らせします。"
+
+        
+
+        # --- 24時間個別メッセージ (必要に応じて書き換えてください) ---
+
+        if {_h} is 0:
+
+            broadcast "{@Prefix} &7日付が変わりました。新しい一日の始まりです！"
+
+        else if {_h} is 1:
+
+            broadcast "{@Prefix} &8深夜1時。静かな夜ですね。松明の補充は大丈夫ですか？"
+
+        else if {_h} is 2:
+
+            broadcast "{@Prefix} &7丑三つ時を過ぎました。……背後にクリーパーはいませんか？"
+
+        else if {_h} is 3:
+
+            broadcast "{@Prefix} &8暗闇から視線を感じる時間帯です。早めにベッドへ向かいましょう。"
+
+        else if {_h} is 4:
+
+            broadcast "{@Prefix} &7空が白み始めてきました。徹夜での作業、お疲れ様です！"
+
+        else if {_h} is 5:
+
+            broadcast "{@Prefix} &a早朝5時。清々しい朝の空気の中での建築は格別ですよ。"
+
+        else if {_h} is 6:
+
+            broadcast "{@Prefix} &e夜明けです！モンスターたちが燃え尽きる音が聞こえてきますね。"
+
+        else if {_h} is 7:
+
+            broadcast "{@Prefix} &6おはようございます！今日もしっかり食べて元気に活動しましょう。"
+
+        else if {_h} is 8:
+
+            broadcast "{@Prefix} &b朝の8時。一日の計画を立てるには絶好のタイミングです。"
+
+        else if {_h} is 9:
+
+            broadcast "{@Prefix} &f午前9時。今日も元気にマイクラを楽しみましょう！"
+
+        else if {_h} is 10:
+
+            broadcast "{@Prefix} &a午前10時。少し休憩して、肩の力を抜きませんか？"
+
+        else if {_h} is 11:
+
+            broadcast "{@Prefix} &fお昼まであと少し！午前の追い込み作業、頑張りましょう。"
+
+        else if {_h} is 12:
+
+            broadcast "{@Prefix} &6正午になりました。しっかりお昼休憩を取ってくださいね。"
+
+        else if {_h} is 13:
+
+            broadcast "{@Prefix} &b午後1時。午後の活動開始です！冒険に出かけましょうか。"
+
+        else if {_h} is 14:
+
+            broadcast "{@Prefix} &7お昼寝が気持ちいい時間帯ですね。のんびり過ごしましょう。"
+
+        else if {_h} is 15:
+
+            broadcast "{@Prefix} &dおやつの時間です！ケーキやクッキーを焼いてみるのはどうでしょう？"
+
+        else if {_h} is 16:
+
+            broadcast "{@Prefix} &e影が長くなってきました。そろそろ拠点に戻る準備の時間です。"
+
+        else if {_h} is 17:
+
+            broadcast "{@Prefix} &6夕暮れ時です。街に灯りがともる光景を楽しみましょう。"
+
+        else if {_h} is 18:
+
+            broadcast "{@Prefix} &c18時。夕食の時間ですね。一日の出来事を語り合いませんか？"
+
+        else if {_h} is 19:
+
+            broadcast "{@Prefix} &9夜の帳が下りました。冒険の夜はここからが本番です！"
+
+        else if {_h} is 20:
+
+            broadcast "{@Prefix} &f20時。仲間たちが集まってくる、一番賑やかな時間ですね。"
+
+        else if {_h} is 21:
+
+            broadcast "{@Prefix} &e夜も更けてきました。交流や作業が一番盛り上がる時間帯ですね！"
+
+        else if {_h} is 22:
+
+            broadcast "{@Prefix} &b22時です。のんびり釣りをしたり、チャットを楽しむのもいいですね。"
+
+        else if {_h} is 23:
+
+            broadcast "{@Prefix} &d深夜23時。夜はこれから！ですが、夜更かしはほどほどに。"
+
